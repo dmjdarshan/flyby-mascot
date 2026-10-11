@@ -1,0 +1,35 @@
+# These rules govern requests to execute commands outside the sandbox.
+# They deliberately prompt instead of auto-allowing destructive or privileged work.
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "prompt",
+    justification = "A hard reset can discard local FlyBy work; confirm the exact target and recovery plan first.",
+    match = ["git reset --hard", "git reset --hard HEAD~1"],
+    not_match = ["git reset --soft HEAD~1", "git status"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "prompt",
+    justification = "git clean can permanently remove untracked source or project files; inspect the candidate paths first.",
+    match = ["git clean -fd", "git clean -fdx"],
+    not_match = ["git status", "git diff"],
+)
+
+prefix_rule(
+    pattern = ["rm", ["-rf", "-fr"]],
+    decision = "prompt",
+    justification = "Recursive deletion requires an explicit, validated target; prefer a recoverable or narrowly scoped operation.",
+    match = ["rm -rf .build", "rm -fr /tmp/flyby-check"],
+    not_match = ["rm temporary.txt", "rmdir empty-directory"],
+)
+
+prefix_rule(
+    pattern = ["sudo"],
+    decision = "prompt",
+    justification = "Privileged commands can modify the developer machine outside the repository and require explicit approval.",
+    match = ["sudo xcode-select --switch /Applications/Xcode.app"],
+    not_match = ["xcode-select -p", "swift --version"],
+)
+
